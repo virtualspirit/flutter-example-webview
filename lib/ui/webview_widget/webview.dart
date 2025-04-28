@@ -68,34 +68,10 @@ class _WebviewState extends State<Webview> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       String webviewUrl = widget.widgetUrl;
-      // final cwCookie = await StoreHelper.getCookie();
-      // if (cwCookie.isNotEmpty) {
-      //   webviewUrl = "${webviewUrl}&cw_conversation=${cwCookie}";
-      // }
       setState(() {
         _controller =
             WebViewControllerPlus()
               ..setJavaScriptMode(JavaScriptMode.unrestricted)
-              ..setBackgroundColor(Colors.white)
-              ..setNavigationDelegate(
-                NavigationDelegate(
-                  onProgress: (int progress) {
-                    // Update loading bar.
-                    widget.onLoadProgress?.call(progress);
-                  },
-                  onPageStarted: (String url) {
-                    widget.onLoadStarted?.call();
-                  },
-                  onPageFinished: (String url) async {
-                    widget.onLoadCompleted?.call();
-                  },
-                  onWebResourceError: (WebResourceError error) {},
-                  onNavigationRequest: (NavigationRequest request) {
-                    _goToUrl(request.url);
-                    return NavigationDecision.prevent;
-                  },
-                ),
-              )
               ..addJavaScriptChannel(
                 "ReactNativeWebView",
                 onMessageReceived: (JavaScriptMessage jsMessage) {
