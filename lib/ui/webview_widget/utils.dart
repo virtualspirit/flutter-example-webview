@@ -17,6 +17,7 @@ bool isJsonString(string) {
 String createWootPostMessage(object) {
   final stringfyObject = "${WOOT_PREFIX}${jsonEncode(object)}";
   final script = 'window.postMessage(\'${stringfyObject}\');';
+  print('wew $script');
   return script;
 }
 
@@ -38,20 +39,20 @@ String generateScripts({
     };
     script += createWootPostMessage(userObject);
   }
-  if (locale != null) {
-    final localeObject = {
-      "event": PostMessageEvents.SET_LOCALE,
-      "locale": locale,
-    };
-    script += createWootPostMessage(localeObject);
-  }
-  if (customAttributes != null) {
-    final attributeObject = {
-      "event": PostMessageEvents.SET_CUSTOM_ATTRIBUTES,
-      "customAttributes": customAttributes,
-    };
-    script += createWootPostMessage(attributeObject);
-  }
+  // if (locale != null) {
+  //   final localeObject = {
+  //     "event": PostMessageEvents.SET_LOCALE,
+  //     "locale": locale,
+  //   };
+  //   script += createWootPostMessage(localeObject);
+  // }
+  // if (customAttributes != null) {
+  //   final attributeObject = {
+  //     "event": PostMessageEvents.SET_CUSTOM_ATTRIBUTES,
+  //     "customAttributes": customAttributes,
+  //   };
+  //   script += createWootPostMessage(attributeObject);
+  // }
   return script;
 }
 
