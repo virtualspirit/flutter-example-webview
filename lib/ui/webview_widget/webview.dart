@@ -109,7 +109,6 @@ class _WebviewState extends State<Webview> {
 
                           setTimeout(() => {
                             \$chatwoot.setUser("${widget.userC.identifier}", {
-                              email: "${widget.userC.email}",
                               name: "${widget.userC.name}",
                               identifier_hash: "${widget.userC.identifierHash}"
                             });

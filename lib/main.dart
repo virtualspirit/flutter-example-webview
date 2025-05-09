@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:my_project/pages/webview_page.dart';
 import 'pages/sign_in_page.dart';
 
 void main() {
@@ -14,7 +15,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Simple Flutter App',
       theme: ThemeData(primarySwatch: Colors.blue),
-      home: const SignInPage(),
+      home: const WebViewPage(name: '', email: ''),
     );
   }
 }
