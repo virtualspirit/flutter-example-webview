@@ -12,7 +12,7 @@ class ChatwootWidget extends StatefulWidget {
   final String baseUrl;
 
   ///User information about the user like email, username and avatar_url
-  final ChatwootUser? user;
+  final ChatwootUser user;
 
   ///User locale
   final String locale;
@@ -38,7 +38,7 @@ class ChatwootWidget extends StatefulWidget {
     Key? key,
     required this.websiteToken,
     required this.baseUrl,
-    this.user,
+    required this.user,
     this.locale = "en",
     this.customAttributes,
     this.closeWidget,

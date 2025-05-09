@@ -1,14 +1,8 @@
-import 'dart:convert';
-import 'dart:io';
-
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:my_project/data/local/entity/chatwoot_user.dart';
 import 'package:my_project/ui/webview_widget/utils.dart';
-import 'package:url_launcher/url_launcher.dart';
-import 'package:webview_flutter/webview_flutter.dart';
-import 'package:webview_flutter_android/webview_flutter_android.dart'
-    as webview_flutter_android;
-import 'package:webview_flutter_plus/webview_flutter_plus.dart';
+import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 
 ///Chatwoot webview widget
 /// {@category FlutterClientSdk}
@@ -34,11 +28,15 @@ class Webview extends StatefulWidget {
   /// See [ChatwootWidget.onLoadCompleted]
   final void Function()? onLoadCompleted;
 
+  late ChatwootUser userC;
+  late String webToken;
+  late String url;
+
   Webview({
     Key? key,
     required String websiteToken,
     required String baseUrl,
-    ChatwootUser? user,
+    required ChatwootUser user,
     String locale = "en",
     customAttributes,
     this.closeWidget,
@@ -48,13 +46,16 @@ class Webview extends StatefulWidget {
     this.onLoadCompleted,
   }) : super(key: key) {
     widgetUrl =
-        "${baseUrl}/widget?website_token=${websiteToken}&locale=${locale}";
+        "$baseUrl/widget?website_token=${websiteToken}&locale=${locale}";
 
     injectedJavaScript = generateScripts(
       user: user,
       locale: locale,
       customAttributes: customAttributes,
     );
+    userC = user;
+    webToken = websiteToken;
+    url = baseUrl;
   }
 
   @override
@@ -62,58 +63,79 @@ class Webview extends StatefulWidget {
 }
 
 class _WebviewState extends State<Webview> {
-  WebViewController? _controller;
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      String webviewUrl = widget.widgetUrl;
-      setState(() {
-        _controller =
-            WebViewControllerPlus()
-              ..setJavaScriptMode(JavaScriptMode.unrestricted)
-              ..addJavaScriptChannel(
-                "ReactNativeWebView",
-                onMessageReceived: (JavaScriptMessage jsMessage) {
-                  print("Chatwoot message received: ${jsMessage.message}");
-                  final message = getMessage(jsMessage.message);
-                  if (isJsonString(message)) {
-                    final parsedMessage = jsonDecode(message);
-                    final eventType = parsedMessage["event"];
-                    final type = parsedMessage["type"];
-                    if (eventType == 'loaded') {
-                      final authToken = parsedMessage["config"]["authToken"];
-                      StoreHelper.storeCookie(authToken);
-                      _controller?.runJavaScript(widget.injectedJavaScript);
-                    }
-                    if (type == 'close-widget') {
-                      widget.closeWidget?.call();
-                    }
-                  }
-                },
-              )
-              ..loadRequest(Uri.parse(webviewUrl));
-
-        if (Platform.isAndroid && widget.onAttachFile != null) {
-          final androidController =
-              _controller!.platform
-                  as webview_flutter_android.AndroidWebViewController;
-          androidController.setOnShowFileSelector(
-            (_) => widget.onAttachFile!.call(),
-          );
-        }
-      });
-    });
-  }
+  final GlobalKey webViewKey = GlobalKey();
+  InAppWebViewController? webViewController;
 
   @override
   Widget build(BuildContext context) {
-    return _controller != null
-        ? WebViewWidget(controller: _controller!)
-        : SizedBox();
-  }
+    return Scaffold(
+      body: Column(
+        children: <Widget>[
+          Expanded(
+            child: Stack(
+              children: [
+                InAppWebView(
+                  key: webViewKey,
+                  initialUrlRequest: URLRequest(url: WebUri(widget.widgetUrl)),
+                  onWebViewCreated: (controller) {
+                    webViewController = controller;
+                    controller.addJavaScriptHandler(
+                      handlerName: 'chatwootClosed',
+                      callback: (args) {
+                        // Tutup aplikasi Flutter
+                        SystemNavigator.pop(); // atau exit(0) jika mau paksa keluar
+                      },
+                    );
+                  },
+                  onLoadStop: (controller, url) async {
+                    await controller.evaluateJavascript(
+                      source: """
+                        (function(d,t) {
+                        document.head.insertAdjacentHTML('beforeend', '<style>.woot--close img { display: none; } #woot-widget-bubble-icon { display: none; }</style>');
+                            var BASE_URL="${widget.url}";
+                            var g=d.createElement(t),s=d.getElementsByTagName(t)[0];
+                            g.src=BASE_URL+"/packs/js/sdk.js";
+                            g.defer = true;
+                            g.async = true;
+                            s.parentNode.insertBefore(g,s);
+                            g.onload=function(){
+                              window.chatwootSDK.run({
+                                websiteToken: '${widget.webToken}',
+                                baseUrl: BASE_URL
+                              })
+                            }
+                          })(document,"script");
 
-  _goToUrl(String url) {
-    launchUrl(Uri.parse(url));
+
+                          setTimeout(() => {
+                            \$chatwoot.setUser("${widget.userC.identifier}", {
+                              email: "${widget.userC.email}",
+                              name: "${widget.userC.name}",
+                              identifier_hash: "${widget.userC.identifierHash}"
+                            });
+
+                            \$chatwoot.toggle('open');
+
+                            window.addEventListener("close-widget", function() {
+                              console.log('wew')
+                              window.flutter_inappwebview.callHandler('chatwootClosed');
+                            });
+
+                            window.addEventListener('chatwoot:on-message', function(e) {
+                              console.log('chatwoot:on-message', e.detail)
+                            })
+
+                            window.\$chatwoot.toggleBubbleVisibility("hide");
+                          }, 300);
+                        """,
+                    );
+                  },
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
