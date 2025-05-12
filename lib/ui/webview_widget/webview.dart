@@ -45,8 +45,7 @@ class Webview extends StatefulWidget {
     this.onLoadProgress,
     this.onLoadCompleted,
   }) : super(key: key) {
-    widgetUrl =
-        "$baseUrl/widget?website_token=${websiteToken}&locale=${locale}";
+    widgetUrl = "$baseUrl/widget?website_token=${websiteToken}";
 
     injectedJavaScript = generateScripts(
       user: user,
@@ -106,26 +105,22 @@ class _WebviewState extends State<Webview> {
                             }
                           })(document,"script");
 
-
                           setTimeout(() => {
                             \$chatwoot.setUser("${widget.userC.identifier}", {
                               name: "${widget.userC.name}",
                               identifier_hash: "${widget.userC.identifierHash}"
                             });
 
-                            \$chatwoot.toggle('open');
 
                             window.addEventListener("close-widget", function() {
-                              console.log('wew')
                               window.flutter_inappwebview.callHandler('chatwootClosed');
                             });
 
-                            window.addEventListener('chatwoot:on-message', function(e) {
-                              console.log('chatwoot:on-message', e.detail)
-                            })
+                           
+                            \$chatwoot.toggle('open');
 
-                            window.\$chatwoot.toggleBubbleVisibility("hide");
-                          }, 300);
+                            \$chatwoot.toggleBubbleVisibility("hide");
+                          }, 100);
                         """,
                     );
                   },
