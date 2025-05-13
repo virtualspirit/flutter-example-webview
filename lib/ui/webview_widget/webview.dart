@@ -89,8 +89,12 @@ class _WebviewState extends State<Webview> {
                   onLoadStop: (controller, url) async {
                     await controller.evaluateJavascript(
                       source: """
+
+                        window.chatwootSettings = {
+                          hideMessageBubble: true,
+                        };
+
                         (function(d,t) {
-                        document.head.insertAdjacentHTML('beforeend', '<style>.woot--close img { display: none; } #woot-widget-bubble-icon { display: none; }</style>');
                             var BASE_URL="${widget.url}";
                             var g=d.createElement(t),s=d.getElementsByTagName(t)[0];
                             g.src=BASE_URL+"/packs/js/sdk.js";
@@ -120,7 +124,7 @@ class _WebviewState extends State<Webview> {
                             \$chatwoot.toggle('open');
 
                             \$chatwoot.toggleBubbleVisibility("hide");
-                          }, 100);
+                          }, 1000);
                         """,
                     );
                   },
